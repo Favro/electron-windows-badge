@@ -1,31 +1,33 @@
-const { nativeImage, ipcMain } = require('electron');
-const BadgeGenerator = require('./badge_generator.js');
-const badgeDescription = 'New notification';
-const UPDATE_BADGE_EVENT = 'update-badge';
+"use strict";
 
-module.exports = class Badge {
-  constructor(win, opts = {}) {
-    this.win = win;
-    this.opts = opts;
-    this.generator = new BadgeGenerator(win, opts);
-    this.initListeners();
-  }
+const { nativeImage, ipcMain } = require("electron");
+const BadgeGenerator = require("./badge_generator.js");
 
-  update(badgeNumber) {
-    if (badgeNumber) {
-      this.generator.generate(badgeNumber).then((base64) => {
-        const image =  nativeImage.createFromDataURL(base64);
-        this.win.setOverlayIcon(image, badgeDescription);
-      });
-    } else {
-      this.win.setOverlayIcon(null, badgeDescription);
-    }
-  }
+class Badge {
+	constructor(window, options = {}) {
+		this.window = window;
+		this.options = options;
+		this.generator = new BadgeGenerator(window, options);
+		this.initListeners();
+	}
 
-  initListeners() {
-    ipcMain.on(UPDATE_BADGE_EVENT, (event, badgeNumber) => {
-      this.update(badgeNumber);
-      event.returnValue = 'success';
-    });
-  }
+	update(badgeText, badgeDescription = "New notification") {
+		if (badgeText) {
+			this.generator.generate(badgeText).then((base64) => {
+				const image = nativeImage.createFromDataURL(base64);
+				this.window.setOverlayIcon(image, badgeDescription);
+			});
+		} else {
+			this.window.setOverlayIcon(null, badgeDescription);
+		}
+	}
+
+	initListeners() {
+		ipcMain.on("update-badge", (event, badgeText) => {
+			this.update(badgeText);
+			event.returnValue = "success";
+		});
+	}
 }
+
+module.exports = { Badge };
